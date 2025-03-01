@@ -13,24 +13,22 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     libcrypto++-dev \
     libcrypto++-dev \
-    build-essential
+    build-essential \
+    pkg-config \
+    libuv1-dev \
+    zlib1g-dev
 
-# Clone and install uWebSockets
-RUN git clone https://github.com/uNetworking/uWebSockets.git && \
+# Install uWebSockets properly
+RUN git clone --recurse-submodules https://github.com/uNetworking/uWebSockets.git && \
     cd uWebSockets && \
-    mkdir build && \
-    cd build && \
-    cmake .. && \
-    make && \
-    make install && \
-    cd ../.. && \
-    rm -rf uWebSockets
+    make && make install && \
+    cd .. && rm -rf uWebSockets
 
 # Copy source code into the container
 COPY . /app
 
 # Compile the C++ code
-RUN g++ -std=c++17 -o chat_server main.cpp storage.cpp encryption.cpp websocket_server.cpp -luWS -lssl -lcrypto
+RUN g++ -std=c++17 -o chat_server main.cpp storage.cpp encryption.cpp websocket_server.cpp -luWS -lssl -lcrypto -lpthread -lz -luv
 
 # Expose the WebSocket server port
 EXPOSE 9000
