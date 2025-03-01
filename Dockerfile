@@ -1,30 +1,39 @@
-FROM ubuntu:20.04
+# Use an official Linux base image
+FROM ubuntu:latest
 
-# Set non-interactive mode to prevent tzdata prompts
-ENV DEBIAN_FRONTEND=noninteractive
+# Set working directory
+WORKDIR /app
 
-# Update package list and install required dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
+    git \
     g++ \
     cmake \
     make \
     libssl-dev \
     libcrypto++-dev \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+    libcrypto++-dev \
+    build-essential
 
-# Install uWebSockets manually (since it's not in Ubuntu repos)
-RUN git clone https://github.com/uNetworking/uWebSockets && \
+# Clone and install uWebSockets
+RUN git clone https://github.com/uNetworking/uWebSockets.git && \
     cd uWebSockets && \
-    make && make install && \
-    cd .. && rm -rf uWebSockets
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make && \
+    make install && \
+    cd ../.. && \
+    rm -rf uWebSockets
 
-# Copy project files
-WORKDIR /app
-COPY . .
+# Copy source code into the container
+COPY . /app
 
-# Build the project
+# Compile the C++ code
 RUN g++ -std=c++17 -o chat_server main.cpp storage.cpp encryption.cpp websocket_server.cpp -luWS -lssl -lcrypto
+
+# Expose the WebSocket server port
+EXPOSE 9000
 
 # Run the server
 CMD ["./chat_server"]
